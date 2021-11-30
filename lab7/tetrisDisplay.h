@@ -20,6 +20,9 @@
 #define EDGE_COLOR     DISPLAY_GRAY
 
 #define SHAPE_SIZE   4
+#define MAX_PLACEABLE   200
+
+enum shape_value_t { line, square, t, l, z, l_inv, z_inv, rndm };
 
 typedef struct box{
   uint16_t color;
@@ -30,22 +33,26 @@ typedef struct box{
 
 typedef struct shape{
   uint16_t color;
-  Box centerBox;
-  Box* boxes;
+  Box* centerBox;
+  Box boxes[SHAPE_SIZE];
 } Shape;
 
 void tetrisDisplay_init();
 
-void tetrisDisplay_makeShape(Shape* activeShape);
+void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
 
 void tetrisDisplay_drawShape(Shape* activeShape);
 
-void tetrisDisplay_moveShape(Shape* activeShape);
+void tetrisDisplay_moveShape(Shape* activeShape, bool right);
 
 void tetrisDisplay_rotateShape(Shape* activeShape);
 
 void tetrisDisplay_drawBox(Box* activeBox);
 
-void tetrisDisplay_findCollision(Shape* activeShape);
+void tetrisDisplay_fall(Shape* activeShape);
+
+bool tetrisDisplay_findCollision(Shape* activeShape);
+
+void tetrisDisplay_test();
 
 #endif /* TETRISDISPLAY_H */
