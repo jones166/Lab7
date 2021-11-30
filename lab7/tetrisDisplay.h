@@ -53,6 +53,10 @@ void tetrisDisplay_fall(Shape* activeShape);
 
 bool tetrisDisplay_findCollision(Shape* activeShape);
 
+void tetrisDisplay_eraseFullLine(uint8_t yCoord);
+
+void tetrisDisplay_moveLinesDown(uint8_t yCoord);
+
 void tetrisDisplay_test();
 
 #endif /* TETRISDISPLAY_H */
