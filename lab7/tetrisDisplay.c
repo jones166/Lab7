@@ -40,7 +40,7 @@ void tetrisDisplay_init() {
 
 bool tetrisDisplay_leftCollision(Shape* activeShape) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
-        if (activeShape->boxes[i].x_pos - 1 == 0) {
+        if (board[activeShape->boxes[i].x_pos - 1][activeShape->boxes[i].y_pos].filled) {
             return true;
         }
     }
@@ -49,7 +49,7 @@ bool tetrisDisplay_leftCollision(Shape* activeShape) {
 
 bool tetrisDisplay_rightCollision(Shape* activeShape) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
-        if (activeShape->boxes[i].x_pos + 1 == NUM_COLS - 1) {
+        if (board[activeShape->boxes[i].x_pos + 1][activeShape->boxes[i].y_pos].filled) {
             return true;
         }
     }
@@ -58,7 +58,7 @@ bool tetrisDisplay_rightCollision(Shape* activeShape) {
 
 bool tetrisDisplay_bottomCollision(Shape* activeShape) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
-        if (activeShape->boxes[i].y_pos + 1 == NUM_ROWS - 1) {
+        if (board[activeShape->boxes[i].x_pos][activeShape->boxes[i].y_pos + 1].filled) {
             return true;
         }
     }
@@ -69,11 +69,8 @@ bool tetrisDisplay_rotateCollision(Shape* activeShape) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         int8_t x_offset = activeShape->boxes[i].x_pos - activeShape->centerBox->x_pos;
         int8_t y_offset = activeShape->boxes[i].y_pos - activeShape->centerBox->y_pos;
-        if (activeShape->boxes[i].x_pos <= y_offset || 
-            activeShape->boxes[i].x_pos - y_offset >= NUM_COLS - 1 ||
-            activeShape->boxes[i].y_pos < -x_offset ||
-            activeShape->boxes[i].y_pos + x_offset >= NUM_ROWS - 1) {
-                return true;
+        if (board[activeShape->boxes[i].x_pos - y_offset][activeShape->boxes[i].y_pos + x_offset].filled) {
+            return true;
         }
     }
     return false;
@@ -189,7 +186,8 @@ void tetrisDisplay_rotateShape(Shape* activeShape) {
     eraser.color = DISPLAY_BLACK;
     tetrisDisplay_setBoxColor(&eraser);
 
-    if (!tetrisDisplay_rotateCollision(activeShape)) {
+    if (activeShape->color == SQUARE_COLOR) return;
+    else if (!tetrisDisplay_rotateCollision(activeShape)) {
         for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
             int8_t x_offset = activeShape->boxes[i].x_pos - activeShape->centerBox->x_pos;
             int8_t y_offset = activeShape->boxes[i].y_pos - activeShape->centerBox->y_pos;
@@ -225,6 +223,30 @@ void tetrisDisplay_fall(Shape* activeShape) {
     tetrisDisplay_setBoxColor(activeShape);
 }
 
+void tetrisDisplay_eraseFullLine(uint8_t yCoord) {
+    for (uint8_t i = 1; i < NUM_COLS - 1; i++) {
+        board[i][yCoord].filled = false;
+        board[i][yCoord].color = DISPLAY_BLACK;
+        tetrisDisplay_drawBox(&board[i][yCoord]);
+    }
+}
+
+void tetrisDisplay_moveLinesDown(uint8_t yCoord) {
+    for (uint8_t i = 1; i < NUM_COLS - 1; i++) {
+        for (uint8_t j = yCoord; j != 0;) {
+            j--;
+            if (board[i][j].filled) {
+                board[i][j+1].filled = true;
+                board[i][j+1].color = board[i][j].color;
+                tetrisDisplay_drawBox(&board[i][j+1]);
+                board[i][j].filled = false;
+                board[i][j].color = DISPLAY_BLACK;
+                tetrisDisplay_drawBox(&board[i][j]);
+            }
+        }
+    }
+}
+
 bool tetrisDisplay_findCollision(Shape* activeShape) {
 
 }
@@ -234,14 +256,24 @@ void tetrisDisplay_test() {
     buttons_init();
     tetrisDisplay_init();
     Shape currentShape;
-    tetrisDisplay_makeShape(&currentShape, 1);
+    tetrisDisplay_makeShape(&currentShape, 3);
     tetrisDisplay_drawShape(&currentShape);
     uint64_t timer = 0;
     printf("Starting loop.\n");
     while (!(buttons_read() & BUTTONS_BTN3_MASK)) {
-        if (++timer == 50000000) {
-            tetrisDisplay_fall(&currentShape);
+        if (++timer == 5000000) {
+            if (tetrisDisplay_bottomCollision(&currentShape)) {
+                for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
+                    board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos] = currentShape.boxes[i];
+                    board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos].filled = true;
+                }
+                tetrisDisplay_makeShape(&currentShape, 5);
+                tetrisDisplay_drawShape(&currentShape);
+                tetrisDisplay_eraseFullLine(19);
+                tetrisDisplay_moveLinesDown(19);
+            }
             timer = 0;
+            tetrisDisplay_fall(&currentShape);
         }
         if (buttons_read() & BUTTONS_BTN0_MASK) {
             tetrisDisplay_moveShape(&currentShape, true);
