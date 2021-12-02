@@ -22,12 +22,12 @@
 #define SHAPE_SIZE   4
 #define MAX_PLACEABLE   200
 
-enum shape_value_t { line, square, t, l, z, l_inv, z_inv, rndm };
+enum shape_value_t { line, square, t, l, z, l_inv, z_inv };
 
 typedef struct box{
   uint16_t color;
-  uint8_t x_pos;
-  uint8_t y_pos;
+  int8_t x_pos;
+  int8_t y_pos;
   bool filled;
 } Box;
 
@@ -42,6 +42,8 @@ void tetrisDisplay_init();
 void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
 
 void tetrisDisplay_drawShape(Shape* activeShape);
+
+void tetrisDisplay_drawNextShape(Shape* nextShape, bool erase);
 
 void tetrisDisplay_moveShape(Shape* activeShape, bool right);
 
