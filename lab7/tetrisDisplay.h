@@ -39,6 +39,14 @@ typedef struct shape{
 
 void tetrisDisplay_init();
 
+void tetrisDisplay_leftCollision(Shape* activeShape);
+
+void tetrisDisplay_rightCollision(Shape* activeShape);
+
+void tetrisDisplay_bottomCollision(Shape* activeShape);
+
+void tetrisDisplay_rotateCollision(Shape* activeShape);
+
 void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
 
 void tetrisDisplay_drawShape(Shape* activeShape);
