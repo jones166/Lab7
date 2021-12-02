@@ -83,14 +83,13 @@ void tetrisDisplay_setBoxColor(Shape* activeShape) {
     }
 }
 
-void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum) {
-    if (shapeNum == rndm) {
-        // DON'T KEEP THIS
-        int MAGIC_NUMBER_SEED = 547;
-        srand(MAGIC_NUMBER_SEED);
-        shapeNum = rand() % 7;
-    }
+void tetrisDisplay_getNextShape(Shape* newShape, uint16_t seed) {
+    srand(seed);
+    uint8_t shapeNum = rand() % 6;
+    tetrisDisplay_makeShape(newShape, shapeNum);
+}
 
+void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum) {
     uint8_t boxNum = 0;
     switch (shapeNum) {
         case line:
@@ -157,6 +156,31 @@ void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum) {
 void tetrisDisplay_drawShape(Shape* activeShape) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         tetrisDisplay_drawBox(&activeShape->boxes[i]);
+    }
+}
+
+void tetrisDisplay_drawNextShape(Shape* nextShape, bool erase) {
+    display_setTextSize(1);
+    display_setCursor(1, DISPLAY_HEIGHT/2);
+    display_setTextColor(DISPLAY_WHITE);
+    display_println("Next Shape");
+
+    uint16_t color = erase ? DISPLAY_BLACK : nextShape->color;
+    nextShape->color = color;
+
+    int8_t dist_x[SHAPE_SIZE];
+    int8_t dist_y[SHAPE_SIZE];
+    for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
+        dist_x[i] = nextShape->centerBox->x_pos - nextShape->boxes[i].x_pos;
+        dist_y[i] = nextShape->centerBox->y_pos - nextShape->boxes[i].y_pos;
+    }
+    nextShape->centerBox->x_pos = -6;
+    nextShape->centerBox->y_pos = 13;
+    for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
+        nextShape->boxes[i].x_pos = nextShape->centerBox->x_pos + dist_x[i];
+        nextShape->boxes[i].y_pos = nextShape->centerBox->y_pos + dist_y[i];
+        nextShape->boxes[i].color = nextShape->color;
+        tetrisDisplay_drawBox(&nextShape->boxes[i]);
     }
 }
 
@@ -258,7 +282,10 @@ void tetrisDisplay_test() {
     Shape currentShape;
     tetrisDisplay_makeShape(&currentShape, 3);
     tetrisDisplay_drawShape(&currentShape);
+    Shape nextShape = currentShape;
+    tetrisDisplay_drawNextShape(&nextShape, false);
     uint64_t timer = 0;
+    uint64_t counter = 0;
     printf("Starting loop.\n");
     while (!(buttons_read() & BUTTONS_BTN3_MASK)) {
         if (++timer == 5000000) {
@@ -267,24 +294,29 @@ void tetrisDisplay_test() {
                     board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos] = currentShape.boxes[i];
                     board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos].filled = true;
                 }
-                tetrisDisplay_makeShape(&currentShape, 5);
+                // printf("Wrong shape collided: %d\n", tetrisDisplay_bottomCollision(&nextShape));
+                // tetrisDisplay_drawNextShape(&nextShape, true);
+                tetrisDisplay_getNextShape(&currentShape, timer + counter);
                 tetrisDisplay_drawShape(&currentShape);
-                tetrisDisplay_eraseFullLine(19);
-                tetrisDisplay_moveLinesDown(19);
+                // nextShape = currentShape;
+                // tetrisDisplay_drawNextShape(&nextShape, false);
             }
             timer = 0;
             tetrisDisplay_fall(&currentShape);
         }
         if (buttons_read() & BUTTONS_BTN0_MASK) {
             tetrisDisplay_moveShape(&currentShape, true);
+            counter++;
             while(buttons_read() & BUTTONS_BTN0_MASK);
         }
         if (buttons_read() & BUTTONS_BTN1_MASK) {
             tetrisDisplay_moveShape(&currentShape, false);
+            counter++;
             while(buttons_read() & BUTTONS_BTN1_MASK);
         }
         if (buttons_read() & BUTTONS_BTN2_MASK) {
             tetrisDisplay_rotateShape(&currentShape);
+            counter++;
             while(buttons_read() & BUTTONS_BTN2_MASK);
         }
     }
