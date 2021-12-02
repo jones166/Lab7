@@ -49,6 +49,8 @@ void tetrisDisplay_rotateCollision(Shape* activeShape);
 
 void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
 
+void tetrisDisplay_getNextShape(Shape* newShape, uint16_t seed);
+
 void tetrisDisplay_drawShape(Shape* activeShape);
 
 void tetrisDisplay_drawNextShape(Shape* nextShape, bool erase);
