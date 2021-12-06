@@ -9,7 +9,7 @@
 
 #define STRING_LENGTH 10
 #define FALL_TIME 5
-#define INSTRUCT_TIMER 100
+#define INSTRUCT_TIMER 15
 #define SCORE_TIMER 10
 #define TETRIS_TEXT_SIZE 5
 #define TOUCH_TEXT_SIZE 2
@@ -47,7 +47,7 @@
 #define START_Y   0
 
 Shape currentShape, nextShape;
-Box board[NUM_COLS][NUM_ROWS];;
+Box board[NUM_COLS][NUM_ROWS];
 
 static enum tetrisControl_State_t { // Tetris control state machine
   init_st,
@@ -137,7 +137,7 @@ void tetrisControl_drawInstructions(bool erase) { //Draws and erases instruction
         display_setCursor(X_INSTRUCT_CURSOR, Y_BTN3_CURSOR);
         display_println(BTN3_KEY);
         display_setCursor(X_INSTRUCT_CURSOR, Y_SW0_CURSOR);
-        display_println(BTN3_KEY);
+        display_println(SW0_KEY);
     }
     else {
         display_setCursor(X_INSTRUCT_CURSOR, Y_INSTRUCT_CURSOR);
@@ -153,7 +153,7 @@ void tetrisControl_drawInstructions(bool erase) { //Draws and erases instruction
         display_setCursor(X_INSTRUCT_CURSOR, Y_BTN3_CURSOR);
         display_println(BTN3_KEY);
         display_setCursor(X_INSTRUCT_CURSOR, Y_SW0_CURSOR);
-        display_println(BTN3_KEY);
+        display_println(SW0_KEY);
     }
 }
 
@@ -161,6 +161,8 @@ void tetrisControl_drawInstructions(bool erase) { //Draws and erases instruction
 // necessary.
 void tetrisControl_init() {
     currentState = init_st;
+    buttons_init();
+    switches_init();
 }
 
 // Standard tick function.
@@ -169,7 +171,6 @@ void tetrisControl_tick() {
     switch(currentState) { //Transistion states
         case init_st:
             tetrisControl_drawStartMsg(false);
-            printf("Line 172\n"); 
             currentState = start_msg_st;
             break;
         case start_msg_st:
@@ -179,25 +180,31 @@ void tetrisControl_tick() {
             else {
                 tetrisControl_drawStartMsg(true);
                 tetrisDisplay_getNextShape(&currentShape, startTimer);
-                //tetrisDisplay_makeShape(&currentShape, 3);
+                for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
+                    printf("Box %d x: %d\n", i, currentShape.boxes[i].x_pos);
+                    printf("Box %d x: %d\n", i, currentShape.boxes[i].y_pos);
+                }
                 startTimer = 0;
                 tetrisControl_drawInstructions(false);
                 currentState = instruct_st;
             }
             break;
         case instruct_st:
-            if (instructTimer == INSTRUCT_TIMER) {
+            if (instructTimer >= INSTRUCT_TIMER) {
                 tetrisControl_drawInstructions(true);
                 tetrisDisplay_getNextShape(&nextShape, startTimer);
-                //tetrisDisplay_makeShape(&currentShape, 4);
                 instructTimer = 0;
-                tetrisDisplay_init();
+                tetrisDisplay_init(); 
+                tetrisDisplay_drawShape(&currentShape);
+                tetrisDisplay_drawNextShape(&nextShape);
                 currentState = falling_st;
             }
             else {
                 currentState = instruct_st;
             }
+            break;
         case falling_st:
+            printf("falling\n");
             if (switches_read() & SWITCHES_SW0_MASK) {
                 tetrisControl_drawScore(false);
                 currentState = disp_score_st;
@@ -286,6 +293,7 @@ void tetrisControl_tick() {
             else {
                 currentState = lose_st;
             }
+            break;
         case disp_score_st:
             if (scoreTime == SCORE_TIMER) {
                 tetrisControl_drawScore(true);
@@ -304,6 +312,7 @@ void tetrisControl_tick() {
             startTimer++;
             break;
         case instruct_st:
+            printf("%d\n", instructTimer);
             instructTimer++;
             break;
         case falling_st:
