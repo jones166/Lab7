@@ -7,12 +7,12 @@
 
 #define SPACING   1
 
-Box board[NUM_COLS][NUM_ROWS];
+// Box board[NUM_COLS][NUM_ROWS];
 Box placed[MAX_PLACEABLE];
 
 uint8_t numPlaced;
 
-void tetrisDisplay_init() {
+void tetrisDisplay_init(Box board[NUM_COLS][NUM_ROWS]) {
     numPlaced = 0;
     display_fillScreen(DISPLAY_BLACK);
     for (uint8_t i = 0; i < NUM_COLS; i++) {
@@ -32,7 +32,7 @@ void tetrisDisplay_init() {
     }
 }
 
-bool tetrisDisplay_leftCollision(Shape* activeShape) {
+bool tetrisDisplay_leftCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         if (board[activeShape->boxes[i].x_pos - 1][activeShape->boxes[i].y_pos].filled) {
             return true;
@@ -41,7 +41,7 @@ bool tetrisDisplay_leftCollision(Shape* activeShape) {
     return false;
 }
 
-bool tetrisDisplay_rightCollision(Shape* activeShape) {
+bool tetrisDisplay_rightCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         if (board[activeShape->boxes[i].x_pos + 1][activeShape->boxes[i].y_pos].filled) {
             return true;
@@ -50,7 +50,7 @@ bool tetrisDisplay_rightCollision(Shape* activeShape) {
     return false;
 }
 
-bool tetrisDisplay_bottomCollision(Shape* activeShape) {
+bool tetrisDisplay_bottomCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         if (board[activeShape->boxes[i].x_pos][activeShape->boxes[i].y_pos + 1].filled) {
             return true;
@@ -59,7 +59,7 @@ bool tetrisDisplay_bottomCollision(Shape* activeShape) {
     return false;
 }
 
-bool tetrisDisplay_rotateCollision(Shape* activeShape) {
+bool tetrisDisplay_rotateCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         int8_t x_offset = activeShape->boxes[i].x_pos - activeShape->centerBox->x_pos;
         int8_t y_offset = activeShape->boxes[i].y_pos - activeShape->centerBox->y_pos;
@@ -70,20 +70,20 @@ bool tetrisDisplay_rotateCollision(Shape* activeShape) {
     return false;
 }
 
-void tetrisDisplay_setBoxColor(Shape* activeShape) {
+void tetrisDisplay_setBoxColor(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         activeShape->boxes[i].color = activeShape->color;
         board[activeShape->boxes[i].x_pos][activeShape->boxes[i].y_pos].color = activeShape->color;
     }
 }
 
-void tetrisDisplay_getNextShape(Shape* newShape, uint16_t seed) {
+void tetrisDisplay_getNextShape(Shape* newShape, Box board[NUM_COLS][NUM_ROWS], uint16_t seed) {
     srand(seed);
     uint8_t shapeNum = rand() % 6;
-    tetrisDisplay_makeShape(newShape, shapeNum);
+    tetrisDisplay_makeShape(newShape, board, shapeNum);
 }
 
-void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum) {
+void tetrisDisplay_makeShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS], uint8_t shapeNum) {
     uint8_t boxNum = 0;
     switch (shapeNum) {
         case line:
@@ -143,8 +143,8 @@ void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum) {
             activeShape->boxes[boxNum++] = board[START_X][START_Y + 1];
             break;
     }
-
-    tetrisDisplay_setBoxColor(activeShape);
+    
+    tetrisDisplay_setBoxColor(activeShape, board);
 }
 
 void tetrisDisplay_drawShape(Shape* activeShape) {
@@ -181,43 +181,43 @@ void tetrisDisplay_eraseNextShape(Shape* nextShape) {
     }
 }
 
-void tetrisDisplay_updateCurrent(Shape* nextShape, Shape* currentShape) {
+void tetrisDisplay_updateCurrent(Shape* nextShape, Shape* currentShape, Box board[NUM_COLS][NUM_ROWS]) {
     switch (nextShape->color) {
         case LINE_COLOR:
-            tetrisDisplay_makeShape(currentShape, 0);
+            tetrisDisplay_makeShape(currentShape, board, 0);
             break;
         case SQUARE_COLOR:
-            tetrisDisplay_makeShape(currentShape, 1);
+            tetrisDisplay_makeShape(currentShape, board, 1);
             break;
         case T_COLOR:
-            tetrisDisplay_makeShape(currentShape, 2);
+            tetrisDisplay_makeShape(currentShape, board, 2);
             break;
         case L_COLOR:
-            tetrisDisplay_makeShape(currentShape, 3);
+            tetrisDisplay_makeShape(currentShape, board, 3);
             break;
         case Z_COLOR:
-            tetrisDisplay_makeShape(currentShape, 4);
+            tetrisDisplay_makeShape(currentShape, board, 4);
             break;
         case L_INV_COLOR:
-            tetrisDisplay_makeShape(currentShape, 5);
+            tetrisDisplay_makeShape(currentShape, board, 5);
             break;
         case Z_INV_COLOR:
-            tetrisDisplay_makeShape(currentShape, 6);
+            tetrisDisplay_makeShape(currentShape, board, 6);
             break;
     }
 }
 
-void tetrisDisplay_moveShape(Shape* activeShape, bool right) {
+void tetrisDisplay_moveShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS], bool right) {
     Shape eraser = *activeShape;
     eraser.color = DISPLAY_BLACK;
-    tetrisDisplay_setBoxColor(&eraser);
+    tetrisDisplay_setBoxColor(&eraser, board);
 
-    if (right && !tetrisDisplay_rightCollision(activeShape)) {
+    if (right && !tetrisDisplay_rightCollision(activeShape, board)) {
         for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
             activeShape->boxes[i].x_pos++;
         }
     }
-    else if (!right && !tetrisDisplay_leftCollision(activeShape)) {
+    else if (!right && !tetrisDisplay_leftCollision(activeShape, board)) {
         for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
             activeShape->boxes[i].x_pos--;
         }
@@ -225,16 +225,16 @@ void tetrisDisplay_moveShape(Shape* activeShape, bool right) {
     else return;
     tetrisDisplay_drawShape(&eraser);    
     tetrisDisplay_drawShape(activeShape);
-    tetrisDisplay_setBoxColor(activeShape);
+    tetrisDisplay_setBoxColor(activeShape, board);
 }
 
-void tetrisDisplay_rotateShape(Shape* activeShape) {
+void tetrisDisplay_rotateShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     Shape eraser = *activeShape;
     eraser.color = DISPLAY_BLACK;
-    tetrisDisplay_setBoxColor(&eraser);
+    tetrisDisplay_setBoxColor(&eraser, board);
 
     if (activeShape->color == SQUARE_COLOR) return;
-    else if (!tetrisDisplay_rotateCollision(activeShape)) {
+    else if (!tetrisDisplay_rotateCollision(activeShape, board)) {
         for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
             int8_t x_offset = activeShape->boxes[i].x_pos - activeShape->centerBox->x_pos;
             int8_t y_offset = activeShape->boxes[i].y_pos - activeShape->centerBox->y_pos;
@@ -246,7 +246,7 @@ void tetrisDisplay_rotateShape(Shape* activeShape) {
 
     tetrisDisplay_drawShape(&eraser);
     tetrisDisplay_drawShape(activeShape);
-    tetrisDisplay_setBoxColor(activeShape);
+    tetrisDisplay_setBoxColor(activeShape, board);
 }
 
 void tetrisDisplay_drawBox(Box* activeBox) {
@@ -255,11 +255,11 @@ void tetrisDisplay_drawBox(Box* activeBox) {
     display_fillRect(x + SPACING, y + SPACING, DRAW_SIZE - SPACING - SPACING, DRAW_SIZE - SPACING - SPACING, activeBox->color);
 }
 
-void tetrisDisplay_fall(Shape* activeShape) {
+void tetrisDisplay_fall(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
     Shape eraser = *activeShape;
     eraser.color = DISPLAY_BLACK;
-    tetrisDisplay_setBoxColor(&eraser);
-    if (!tetrisDisplay_bottomCollision(activeShape)) {
+    tetrisDisplay_setBoxColor(&eraser, board);
+    if (!tetrisDisplay_bottomCollision(activeShape, board)) {
         for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
             activeShape->boxes[i].y_pos++;
         }
@@ -267,10 +267,10 @@ void tetrisDisplay_fall(Shape* activeShape) {
     else return;
     tetrisDisplay_drawShape(&eraser);
     tetrisDisplay_drawShape(activeShape);
-    tetrisDisplay_setBoxColor(activeShape);
+    tetrisDisplay_setBoxColor(activeShape, board);
 }
 
-void tetrisDisplay_eraseFullLine(uint8_t yCoord) {
+void tetrisDisplay_eraseFullLine(uint8_t yCoord, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 1; i < NUM_COLS - 1; i++) {
         board[i][yCoord].filled = false;
         board[i][yCoord].color = DISPLAY_BLACK;
@@ -278,7 +278,7 @@ void tetrisDisplay_eraseFullLine(uint8_t yCoord) {
     }
 }
 
-void tetrisDisplay_moveLinesDown(uint8_t yCoord) {
+void tetrisDisplay_moveLinesDown(uint8_t yCoord, Box board[NUM_COLS][NUM_ROWS]) {
     for (uint8_t i = 1; i < NUM_COLS - 1; i++) {
         for (uint8_t j = yCoord; j != 0;) {
             j--;
@@ -297,45 +297,46 @@ void tetrisDisplay_moveLinesDown(uint8_t yCoord) {
 void tetrisDisplay_test() {
     display_init();
     buttons_init();
-    tetrisDisplay_init();
+    Box board[NUM_COLS][NUM_ROWS];
+    tetrisDisplay_init(board);
     Shape currentShape;
-    tetrisDisplay_getNextShape(&currentShape, 2);
+    tetrisDisplay_getNextShape(&currentShape, board, 2);
     tetrisDisplay_drawShape(&currentShape);
     Shape nextShape;
-    tetrisDisplay_getNextShape(&nextShape, 800);
+    tetrisDisplay_getNextShape(&nextShape, board, 800);
     tetrisDisplay_drawNextShape(&nextShape);
     uint64_t timer = 0;
     uint64_t counter = 0;
     printf("Starting loop.\n");
     while (!(buttons_read() & BUTTONS_BTN3_MASK)) {
         if (++timer == 5000000) {
-            if (tetrisDisplay_bottomCollision(&currentShape)) {
+            if (tetrisDisplay_bottomCollision(&currentShape, board)) {
                 for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
                     board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos] = currentShape.boxes[i];
                     board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos].filled = true;
                 }
-                tetrisDisplay_updateCurrent(&nextShape, &currentShape);
+                tetrisDisplay_updateCurrent(&nextShape, &currentShape, board);
                 tetrisDisplay_eraseNextShape(&nextShape);
-                tetrisDisplay_getNextShape(&nextShape, timer + counter);
+                tetrisDisplay_getNextShape(&nextShape, board, timer + counter);
                 tetrisDisplay_drawNextShape(&nextShape);
 
                 tetrisDisplay_drawShape(&currentShape);
             }
             timer = 0;
-            tetrisDisplay_fall(&currentShape);
+            tetrisDisplay_fall(&currentShape, board);
         }
         if (buttons_read() & BUTTONS_BTN0_MASK) {
-            tetrisDisplay_moveShape(&currentShape, true);
+            tetrisDisplay_moveShape(&currentShape, board, true);
             counter++;
             while(buttons_read() & BUTTONS_BTN0_MASK);
         }
         if (buttons_read() & BUTTONS_BTN1_MASK) {
-            tetrisDisplay_moveShape(&currentShape, false);
+            tetrisDisplay_moveShape(&currentShape, board, false);
             counter++;
             while(buttons_read() & BUTTONS_BTN1_MASK);
         }
         if (buttons_read() & BUTTONS_BTN2_MASK) {
-            tetrisDisplay_rotateShape(&currentShape);
+            tetrisDisplay_rotateShape(&currentShape, board);
             counter++;
             while(buttons_read() & BUTTONS_BTN2_MASK);
         }
