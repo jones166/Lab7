@@ -159,14 +159,11 @@ void tetrisDisplay_drawShape(Shape* activeShape) {
     }
 }
 
-void tetrisDisplay_drawNextShape(Shape* nextShape, bool erase) {
+void tetrisDisplay_drawNextShape(Shape* nextShape) {
     display_setTextSize(1);
     display_setCursor(1, DISPLAY_HEIGHT/2);
     display_setTextColor(DISPLAY_WHITE);
     display_println("Next Shape");
-
-    uint16_t color = erase ? DISPLAY_BLACK : nextShape->color;
-    nextShape->color = color;
 
     int8_t dist_x[SHAPE_SIZE];
     int8_t dist_y[SHAPE_SIZE];
@@ -179,8 +176,40 @@ void tetrisDisplay_drawNextShape(Shape* nextShape, bool erase) {
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         nextShape->boxes[i].x_pos = nextShape->centerBox->x_pos + dist_x[i];
         nextShape->boxes[i].y_pos = nextShape->centerBox->y_pos + dist_y[i];
-        nextShape->boxes[i].color = nextShape->color;
         tetrisDisplay_drawBox(&nextShape->boxes[i]);
+    }
+}
+
+void tetrisDisplay_eraseNextShape(Shape* nextShape) {
+    for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
+        nextShape->boxes[i].color = DISPLAY_BLACK;
+        tetrisDisplay_drawBox(&nextShape->boxes[i]);
+    }
+}
+
+void tetrisDisplay_updateCurrent(Shape* nextShape, Shape* currentShape) {
+    switch (nextShape->color) {
+        case LINE_COLOR:
+            tetrisDisplay_makeShape(currentShape, 0);
+            break;
+        case SQUARE_COLOR:
+            tetrisDisplay_makeShape(currentShape, 1);
+            break;
+        case T_COLOR:
+            tetrisDisplay_makeShape(currentShape, 2);
+            break;
+        case L_COLOR:
+            tetrisDisplay_makeShape(currentShape, 3);
+            break;
+        case Z_COLOR:
+            tetrisDisplay_makeShape(currentShape, 4);
+            break;
+        case L_INV_COLOR:
+            tetrisDisplay_makeShape(currentShape, 5);
+            break;
+        case Z_INV_COLOR:
+            tetrisDisplay_makeShape(currentShape, 6);
+            break;
     }
 }
 
@@ -282,8 +311,9 @@ void tetrisDisplay_test() {
     Shape currentShape;
     tetrisDisplay_makeShape(&currentShape, 3);
     tetrisDisplay_drawShape(&currentShape);
-    Shape nextShape = currentShape;
-    tetrisDisplay_drawNextShape(&nextShape, false);
+    Shape nextShape;
+    tetrisDisplay_getNextShape(&nextShape, 800);
+    tetrisDisplay_drawNextShape(&nextShape);
     uint64_t timer = 0;
     uint64_t counter = 0;
     printf("Starting loop.\n");
@@ -294,12 +324,12 @@ void tetrisDisplay_test() {
                     board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos] = currentShape.boxes[i];
                     board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos].filled = true;
                 }
-                // printf("Wrong shape collided: %d\n", tetrisDisplay_bottomCollision(&nextShape));
-                // tetrisDisplay_drawNextShape(&nextShape, true);
-                tetrisDisplay_getNextShape(&currentShape, timer + counter);
+                tetrisDisplay_updateCurrent(&nextShape, &currentShape);
+                tetrisDisplay_eraseNextShape(&nextShape);
+                tetrisDisplay_getNextShape(&nextShape, timer + counter);
+                tetrisDisplay_drawNextShape(&nextShape);
+
                 tetrisDisplay_drawShape(&currentShape);
-                // nextShape = currentShape;
-                // tetrisDisplay_drawNextShape(&nextShape, false);
             }
             timer = 0;
             tetrisDisplay_fall(&currentShape);
