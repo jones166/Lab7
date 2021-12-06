@@ -48,6 +48,7 @@
 
 Shape currentShape, nextShape;
 Box board[NUM_COLS][NUM_ROWS];
+Box placeable[MAX_PLACEABLE];
 
 static enum tetrisControl_State_t { // Tetris control state machine
   init_st,
@@ -179,11 +180,6 @@ void tetrisControl_tick() {
             }
             else {
                 tetrisControl_drawStartMsg(true);
-                tetrisDisplay_getNextShape(&currentShape, startTimer);
-                for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
-                    printf("Box %d x: %d\n", i, currentShape.boxes[i].x_pos);
-                    printf("Box %d x: %d\n", i, currentShape.boxes[i].y_pos);
-                }
                 startTimer = 0;
                 tetrisControl_drawInstructions(false);
                 currentState = instruct_st;
@@ -192,10 +188,11 @@ void tetrisControl_tick() {
         case instruct_st:
             if (instructTimer >= INSTRUCT_TIMER) {
                 tetrisControl_drawInstructions(true);
-                tetrisDisplay_getNextShape(&nextShape, startTimer);
                 instructTimer = 0;
-                tetrisDisplay_init(); 
+                tetrisDisplay_init(board);
+                tetrisDisplay_getNextShape(&currentShape, board, startTimer); 
                 tetrisDisplay_drawShape(&currentShape);
+                tetrisDisplay_getNextShape(&nextShape, board, startTimer);
                 tetrisDisplay_drawNextShape(&nextShape);
                 currentState = falling_st;
             }
@@ -204,46 +201,29 @@ void tetrisControl_tick() {
             }
             break;
         case falling_st:
-            printf("falling\n");
             if (switches_read() & SWITCHES_SW0_MASK) {
                 tetrisControl_drawScore(false);
                 currentState = disp_score_st;
             }
-            if (fallCounter < FALL_TIME) {
-                if (buttons_read() & BUTTONS_BTN3_MASK) {
-                    fallCounter += 3;
-                }
-                if (buttons_read() & BUTTONS_BTN0_MASK) {
-                    tetrisDisplay_moveShape(&currentShape, true);
-                    fallCounter++;
-                    while(buttons_read() & BUTTONS_BTN0_MASK);
-                }
-                if (buttons_read() & BUTTONS_BTN1_MASK) {
-                    tetrisDisplay_moveShape(&currentShape, false);
-                    fallCounter++;
-                    while(buttons_read() & BUTTONS_BTN1_MASK);
-                }
-                if (buttons_read() & BUTTONS_BTN2_MASK) {
-                    tetrisDisplay_rotateShape(&currentShape);
-                    fallCounter++;
-                    while(buttons_read() & BUTTONS_BTN2_MASK);
-                }
-            }
-            else {
-                if (tetrisDisplay_bottomCollision(&currentShape)){
+            if (fallCounter >= FALL_TIME) {
+                if (tetrisDisplay_bottomCollision(&currentShape, board)){
                     currentScore++;
                     fallCounter = 0;
                     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
                         board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos] = currentShape.boxes[i];
                         board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos].filled = true;
                     }
-                    currentShape = nextShape;
-                    tetrisDisplay_getNextShape(&nextShape, currentScore);
-                    //tetrisDisplay_makeShape(&nextShape, 2);
+                    tetrisDisplay_updateCurrent(&nextShape, &currentShape, board);
+                    tetrisDisplay_eraseNextShape(&nextShape);
+                    // Changle this seed
+                    tetrisDisplay_getNextShape(&nextShape, board, startTimer);
+                    tetrisDisplay_drawNextShape(&nextShape);
+
+                    tetrisDisplay_drawShape(&currentShape);
                     currentState = check_row_st;
                 }
                 else {
-                    tetrisDisplay_fall(&currentShape);
+                    tetrisDisplay_fall(&currentShape, board);
                     fallCounter = 0;
                     currentState = falling_st;
                 }
@@ -273,8 +253,8 @@ void tetrisControl_tick() {
                                 break;
                             }
                             if(i == NUM_COLS) {
-                                tetrisDisplay_eraseFullLine(j);
-                                tetrisDisplay_moveLinesDown(j);
+                                tetrisDisplay_eraseFullLine(j, board);
+                                tetrisDisplay_moveLinesDown(j, board);
                                 currentScore += 10;
                                 i = 0; 
                             }
@@ -316,6 +296,22 @@ void tetrisControl_tick() {
             instructTimer++;
             break;
         case falling_st:
+            if (buttons_read() & BUTTONS_BTN3_MASK) {
+                fallCounter++;
+            }
+            if (buttons_read() & BUTTONS_BTN0_MASK) {
+                tetrisDisplay_moveShape(&currentShape, board, true);
+                while(buttons_read() & BUTTONS_BTN0_MASK);
+            }
+            if (buttons_read() & BUTTONS_BTN1_MASK) {
+                tetrisDisplay_moveShape(&currentShape, board, false);
+                while(buttons_read() & BUTTONS_BTN1_MASK);
+            }
+            if (buttons_read() & BUTTONS_BTN2_MASK) {
+                tetrisDisplay_rotateShape(&currentShape, board);
+                while(buttons_read() & BUTTONS_BTN2_MASK);
+            }
+            fallCounter++;
             break;
         case check_row_st:
             break;
