@@ -39,21 +39,15 @@ typedef struct shape{
 
 void tetrisDisplay_init();
 
-bool tetrisDisplay_leftCollision(Shape* activeShape);
-
-bool tetrisDisplay_rightCollision(Shape* activeShape);
-
-bool tetrisDisplay_bottomCollision(Shape* activeShape);
-
-bool tetrisDisplay_rotateCollision(Shape* activeShape);
-
 void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
-
-void tetrisDisplay_getNextShape(Shape* newShape, uint16_t seed);
 
 void tetrisDisplay_drawShape(Shape* activeShape);
 
-void tetrisDisplay_drawNextShape(Shape* nextShape, bool erase);
+void tetrisDisplay_drawNextShape(Shape* nextShape);
+
+void tetrisDisplay_eraseNextShape(Shape* nextShape);
+
+void tetrisDisplay_updateCurrent(Shape* nextShape, Shape* currentShape);
 
 void tetrisDisplay_moveShape(Shape* activeShape, bool right);
 
