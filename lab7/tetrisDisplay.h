@@ -22,6 +22,12 @@
 #define SHAPE_SIZE   4
 #define MAX_PLACEABLE   200
 
+#define LEFT_SIDE   (DISPLAY_WIDTH / 2 - DRAW_SIZE * NUM_COLS / 2)
+#define TOP_SIDE   (DISPLAY_HEIGHT / 2 - DRAW_SIZE * NUM_ROWS / 2)
+
+#define START_X   5
+#define START_Y   0
+
 enum shape_value_t { line, square, t, l, z, l_inv, z_inv };
 
 typedef struct box{
@@ -43,6 +49,8 @@ void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
 
 void tetrisDisplay_drawShape(Shape* activeShape);
 
+void tetrisDisplay_getNextShape(Shape* nextShape, uint16_t seed);
+
 void tetrisDisplay_drawNextShape(Shape* nextShape);
 
 void tetrisDisplay_eraseNextShape(Shape* nextShape);
@@ -57,7 +65,13 @@ void tetrisDisplay_drawBox(Box* activeBox);
 
 void tetrisDisplay_fall(Shape* activeShape);
 
-bool tetrisDisplay_findCollision(Shape* activeShape);
+bool tetrisDisplay_bottomCollision(Shape* activeShape);
+
+bool tetrisDisplay_rotateCollision(Shape* activeShape);
+
+bool tetrisDisplay_leftCollision(Shape* activeShape);
+
+bool tetrisDisplay_rightCollision(Shape* activeShape);
 
 void tetrisDisplay_eraseFullLine(uint8_t yCoord);
 
