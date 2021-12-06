@@ -43,39 +43,39 @@ typedef struct shape{
   Box boxes[SHAPE_SIZE];
 } Shape;
 
-void tetrisDisplay_init();
+void tetrisDisplay_init(Box board[NUM_COLS][NUM_ROWS]);
 
-void tetrisDisplay_makeShape(Shape* activeShape, uint8_t shapeNum);
+void tetrisDisplay_makeShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS], uint8_t shapeNum);
 
 void tetrisDisplay_drawShape(Shape* activeShape);
 
-void tetrisDisplay_getNextShape(Shape* nextShape, uint16_t seed);
+void tetrisDisplay_getNextShape(Shape* nextShape, Box board[NUM_COLS][NUM_ROWS], uint16_t seed);
 
 void tetrisDisplay_drawNextShape(Shape* nextShape);
 
 void tetrisDisplay_eraseNextShape(Shape* nextShape);
 
-void tetrisDisplay_updateCurrent(Shape* nextShape, Shape* currentShape);
+void tetrisDisplay_updateCurrent(Shape* nextShape, Shape* currentShape, Box board[NUM_COLS][NUM_ROWS]);
 
-void tetrisDisplay_moveShape(Shape* activeShape, bool right);
+void tetrisDisplay_moveShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS], bool right);
 
-void tetrisDisplay_rotateShape(Shape* activeShape);
+void tetrisDisplay_rotateShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]);
 
 void tetrisDisplay_drawBox(Box* activeBox);
 
-void tetrisDisplay_fall(Shape* activeShape);
+void tetrisDisplay_fall(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]);
 
-bool tetrisDisplay_bottomCollision(Shape* activeShape);
+bool tetrisDisplay_bottomCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]);
 
-bool tetrisDisplay_rotateCollision(Shape* activeShape);
+bool tetrisDisplay_rotateCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]);
 
-bool tetrisDisplay_leftCollision(Shape* activeShape);
+bool tetrisDisplay_leftCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]);
 
-bool tetrisDisplay_rightCollision(Shape* activeShape);
+bool tetrisDisplay_rightCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]);
 
-void tetrisDisplay_eraseFullLine(uint8_t yCoord);
+void tetrisDisplay_eraseFullLine(uint8_t yCoord, Box board[NUM_COLS][NUM_ROWS]);
 
-void tetrisDisplay_moveLinesDown(uint8_t yCoord);
+void tetrisDisplay_moveLinesDown(uint8_t yCoord, Box board[NUM_COLS][NUM_ROWS]);
 
 void tetrisDisplay_test();
 
