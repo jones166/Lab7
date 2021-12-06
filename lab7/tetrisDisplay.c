@@ -5,12 +5,6 @@
 #include "buttons.h"
 #include "tetrisDisplay.h"
 
-#define LEFT_SIDE   (DISPLAY_WIDTH / 2 - DRAW_SIZE * NUM_COLS / 2)
-#define TOP_SIDE   (DISPLAY_HEIGHT / 2 - DRAW_SIZE * NUM_ROWS / 2)
-
-#define START_X   5
-#define START_Y   0
-
 #define SPACING   1
 
 Box board[NUM_COLS][NUM_ROWS];
@@ -300,16 +294,12 @@ void tetrisDisplay_moveLinesDown(uint8_t yCoord) {
     }
 }
 
-bool tetrisDisplay_findCollision(Shape* activeShape) {
-
-}
-
 void tetrisDisplay_test() {
     display_init();
     buttons_init();
     tetrisDisplay_init();
     Shape currentShape;
-    tetrisDisplay_makeShape(&currentShape, 3);
+    tetrisDisplay_getNextShape(&currentShape, 2);
     tetrisDisplay_drawShape(&currentShape);
     Shape nextShape;
     tetrisDisplay_getNextShape(&nextShape, 800);
