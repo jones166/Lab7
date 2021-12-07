@@ -60,7 +60,8 @@ static enum tetrisControl_State_t { // Tetris control state machine
   disp_score_st
 } currentState;
 
-static uint8_t instructTimer = 0, startTimer = 0, scoreTime = 0, currentScore = 0, fallCounter = 0;
+static uint8_t instructTimer = 0, scoreTime = 0, currentScore = 0, fallCounter = 0;
+static uint16_t startTimer = 0;
 
 void tetrisControl_drawStartMsg(bool erase) { //Draws and erases start message
     if (erase) {
@@ -179,6 +180,7 @@ void tetrisControl_tick() {
                 currentState = start_msg_st;
             }
             else {
+                srand(startTimer);
                 tetrisControl_drawStartMsg(true);
                 tetrisControl_drawInstructions(false);
                 currentState = instruct_st;
@@ -189,9 +191,9 @@ void tetrisControl_tick() {
                 tetrisControl_drawInstructions(true);
                 instructTimer = 0;
                 tetrisDisplay_init(board);
-                tetrisDisplay_getNextShape(&currentShape, board, startTimer); 
+                tetrisDisplay_getNextShape(&currentShape, board); 
                 tetrisDisplay_drawShape(&currentShape);
-                tetrisDisplay_getNextShape(&nextShape, board, startTimer + FALL_TIME);
+                tetrisDisplay_getNextShape(&nextShape, board);
                 tetrisDisplay_drawNextShape(&nextShape);
                 currentState = falling_st;
             }
@@ -215,7 +217,7 @@ void tetrisControl_tick() {
                     tetrisDisplay_updateCurrent(&nextShape, &currentShape, board);
                     tetrisDisplay_eraseNextShape(&nextShape);
                     //change seed
-                    tetrisDisplay_getNextShape(&nextShape, board, currentScore);
+                    tetrisDisplay_getNextShape(&nextShape, board);
                     // tetrisDisplay_drawNextShape(&nextShape);
                     // tetrisDisplay_drawShape(&currentShape);
                     currentState = check_row_st;
@@ -232,9 +234,9 @@ void tetrisControl_tick() {
                 tetrisControl_drawScore(false);
                 currentState = disp_score_st;
             }
-            else { // Put a pin in that one
+            else {
                 for (int8_t j = 20; j >= 0 || currentState==lose_st; j--) {
-                    for (uint8_t i = 1; i < 10; i++) {
+                    for (uint8_t i = 1; i <= 10; i++) {
                         if(board[i][j].y_pos == START_Y) {
                             if (board[i][j].filled) {
                                 display_fillScreen(DISPLAY_BLACK);
@@ -247,7 +249,7 @@ void tetrisControl_tick() {
                             if(!board[i][j].filled) {
                                 break;
                             }
-                            if(i == NUM_COLS) {
+                            if(i == 10) {
                                 tetrisDisplay_eraseFullLine(j, board);
                                 tetrisDisplay_moveLinesDown(j, board);
                                 currentScore += 10;
@@ -264,17 +266,18 @@ void tetrisControl_tick() {
             }
             break;
         case lose_st:
-            if (display_isTouched()) {
+            if (!display_isTouched()) {
+                currentState = lose_st;
+            }
+            else {
                 tetrisControl_drawLoseMsg(true);
                 tetrisControl_drawScore(false);
                 currentState = disp_score_st;
             }
-            else {
-                currentState = lose_st;
-            }
             break;
         case disp_score_st:
             if (scoreTime == SCORE_TIMER) {
+                scoreTime = 0;
                 tetrisControl_drawScore(true);
                 currentState = start_msg_st;
             }
@@ -317,6 +320,7 @@ void tetrisControl_tick() {
         case lose_st:
             break;
         case disp_score_st:
+            scoreTime++;
             break;
     }
 }
