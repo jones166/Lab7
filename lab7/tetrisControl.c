@@ -10,7 +10,7 @@
 #define STRING_LENGTH 10
 #define FALL_TIME 5
 #define INSTRUCT_TIMER 15
-#define SCORE_TIMER 10
+#define SCORE_TIMER 20
 #define TETRIS_TEXT_SIZE 5
 #define TOUCH_TEXT_SIZE 2
 #define LOSE_TEXT_SIZE 4
@@ -60,7 +60,8 @@ static enum tetrisControl_State_t { // Tetris control state machine
   disp_score_st
 } currentState;
 
-static uint8_t instructTimer = 0, startTimer = 0, scoreTime = 0, currentScore = 0, fallCounter = 0;
+static uint8_t instructTimer = 0, scoreTime = 0, currentScore = 0, fallCounter = 0;
+static uint16_t startTimer = 0;
 
 void tetrisControl_drawStartMsg(bool erase) { //Draws and erases start message
     if (erase) {
@@ -179,6 +180,7 @@ void tetrisControl_tick() {
                 currentState = start_msg_st;
             }
             else {
+                srand(startTimer);
                 tetrisControl_drawStartMsg(true);
                 tetrisControl_drawInstructions(false);
                 currentState = instruct_st;
@@ -189,9 +191,9 @@ void tetrisControl_tick() {
                 tetrisControl_drawInstructions(true);
                 instructTimer = 0;
                 tetrisDisplay_init(board);
-                tetrisDisplay_getNextShape(&currentShape, board, startTimer); 
+                tetrisDisplay_getNextShape(&currentShape, board); 
                 tetrisDisplay_drawShape(&currentShape);
-                tetrisDisplay_getNextShape(&nextShape, board, startTimer + FALL_TIME);
+                tetrisDisplay_getNextShape(&nextShape, board);
                 tetrisDisplay_drawNextShape(&nextShape);
                 currentState = falling_st;
             }
@@ -215,7 +217,7 @@ void tetrisControl_tick() {
                     tetrisDisplay_updateCurrent(&nextShape, &currentShape, board);
                     tetrisDisplay_eraseNextShape(&nextShape);
                     //change seed
-                    tetrisDisplay_getNextShape(&nextShape, board, currentScore);
+                    tetrisDisplay_getNextShape(&nextShape, board);
                     // tetrisDisplay_drawNextShape(&nextShape);
                     // tetrisDisplay_drawShape(&currentShape);
                     currentState = check_row_st;
