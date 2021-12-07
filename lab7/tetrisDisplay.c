@@ -77,9 +77,9 @@ void tetrisDisplay_setBoxColor(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]
     }
 }
 
-void tetrisDisplay_getNextShape(Shape* newShape, Box board[NUM_COLS][NUM_ROWS], uint16_t seed) {
-    srand(seed);
-    uint8_t shapeNum = rand() % 6;
+void tetrisDisplay_getNextShape(Shape* newShape, Box board[NUM_COLS][NUM_ROWS]) {
+    //srand(seed);
+    uint8_t shapeNum = rand() % 7;
     tetrisDisplay_makeShape(newShape, board, shapeNum);
 }
 
@@ -300,10 +300,10 @@ void tetrisDisplay_test() {
     Box board[NUM_COLS][NUM_ROWS];
     tetrisDisplay_init(board);
     Shape currentShape;
-    tetrisDisplay_getNextShape(&currentShape, board, 2);
+    tetrisDisplay_getNextShape(&currentShape, board);
     tetrisDisplay_drawShape(&currentShape);
     Shape nextShape;
-    tetrisDisplay_getNextShape(&nextShape, board, 800);
+    tetrisDisplay_getNextShape(&nextShape, board);
     tetrisDisplay_drawNextShape(&nextShape);
     uint64_t timer = 0;
     uint64_t counter = 0;
@@ -317,7 +317,7 @@ void tetrisDisplay_test() {
                 }
                 tetrisDisplay_updateCurrent(&nextShape, &currentShape, board);
                 tetrisDisplay_eraseNextShape(&nextShape);
-                tetrisDisplay_getNextShape(&nextShape, board, timer + counter);
+                tetrisDisplay_getNextShape(&nextShape, board);
                 tetrisDisplay_drawNextShape(&nextShape);
 
                 tetrisDisplay_drawShape(&currentShape);
