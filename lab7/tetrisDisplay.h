@@ -49,7 +49,7 @@ void tetrisDisplay_makeShape(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS], 
 
 void tetrisDisplay_drawShape(Shape* activeShape);
 
-void tetrisDisplay_getNextShape(Shape* nextShape, Box board[NUM_COLS][NUM_ROWS], uint16_t seed);
+void tetrisDisplay_getNextShape(Shape* nextShape, Box board[NUM_COLS][NUM_ROWS]);
 
 void tetrisDisplay_drawNextShape(Shape* nextShape);
 
