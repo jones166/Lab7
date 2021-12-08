@@ -9,7 +9,7 @@
 
 #define STRING_LENGTH 10
 #define FALL_TIME 5
-#define INSTRUCT_TIMER 15
+#define INSTRUCT_TIMER 150
 #define SCORE_TIMER 20
 #define TETRIS_TEXT_SIZE 5
 #define TOUCH_TEXT_SIZE 2
@@ -57,7 +57,8 @@ static enum tetrisControl_State_t { // Tetris control state machine
   falling_st,
   check_row_st,
   lose_st,
-  disp_score_st
+  disp_score_st,
+  lower_switch_st
 } currentState;
 
 static uint8_t instructTimer = 0, scoreTime = 0, currentScore = 0, fallCounter = 0;
@@ -76,8 +77,24 @@ void tetrisControl_drawStartMsg(bool erase) { //Draws and erases start message
     else {
     display_setCursor(X_CURSOR, Y_CURSOR);
     display_setTextSize(TETRIS_TEXT_SIZE);
+    display_setTextColor(DISPLAY_RED);
+    display_println("T");
+    display_setCursor(X_CURSOR, Y_CURSOR);
+    display_setTextColor(DISPLAY_GREEN);
+    display_println(" E");
+    display_setCursor(X_CURSOR, Y_CURSOR);
+    display_setTextColor(0xFD00);
+    display_println("  T");
+    display_setCursor(X_CURSOR, Y_CURSOR);
+    display_setTextColor(DISPLAY_CYAN);
+    display_println("   R");
+    display_setTextColor(DISPLAY_YELLOW);
+    display_setCursor(X_CURSOR, Y_CURSOR);
+    display_println("    I");
+    display_setCursor(X_CURSOR, Y_CURSOR);
+    display_setTextColor(DISPLAY_MAGENTA);
+    display_println("     S");
     display_setTextColor(DISPLAY_WHITE);
-    display_println(START_MSG);
     display_setCursor(X_TOUCH_CURSOR, Y_TOUCH_CURSOR);
     display_setTextSize(TOUCH_TEXT_SIZE);
     display_println(START_TOUCH_MSG);
@@ -111,7 +128,7 @@ void tetrisControl_drawScore(bool erase) { //Displays the current score
         display_setTextSize(SCORE_TEXT_SIZE);
         display_setTextColor(DISPLAY_BLACK);
         char stringMsg[STRING_LENGTH];
-        sprintf(stringMsg, "%s%d\n", SCORE_MSG, currentScore);
+        sprintf(stringMsg, "%s: %d\n", SCORE_MSG, currentScore);
         display_println(stringMsg);
     }
     else {
@@ -168,7 +185,6 @@ void tetrisControl_init() {
 }
 
 // Standard tick function.
-
 void tetrisControl_tick() {
     switch(currentState) { //Transistion states
         case init_st:
@@ -203,6 +219,7 @@ void tetrisControl_tick() {
             break;
         case falling_st:
             if (switches_read() & SWITCHES_SW0_MASK) {
+                display_fillScreen(DISPLAY_BLACK);
                 tetrisControl_drawScore(false);
                 currentState = disp_score_st;
             }
@@ -231,6 +248,7 @@ void tetrisControl_tick() {
             break;
         case check_row_st:
             if (switches_read() & SWITCHES_SW0_MASK) {
+                display_fillScreen(DISPLAY_BLACK);
                 tetrisControl_drawScore(false);
                 currentState = disp_score_st;
             }
@@ -263,13 +281,35 @@ void tetrisControl_tick() {
             break;
         case disp_score_st:
             if (scoreTime == SCORE_TIMER) {
-                tetrisControl_drawScore(true);
-                currentState = start_msg_st;
+                if(switches_read() & SWITCHES_SW0_MASK) {
+                    tetrisControl_drawScore(true);
+                    display_setCursor(X_CURSOR, Y_SCORE_CURSOR);
+                    display_setTextColor(DISPLAY_WHITE);
+                    display_println("lower switch");
+                    scoreTime = 0;
+                    currentScore = 0;
+                    currentState = lower_switch_st;
+                }
+                else {
+                    tetrisControl_drawScore(true);
+                    scoreTime = 0;
+                    currentScore = 0;
+                    tetrisControl_drawStartMsg(false);
+                    currentState = start_msg_st;
+                }
             }
             else {
                 currentState = disp_score_st;
             }
             break;
+        case lower_switch_st:
+            if (!switches_read() & SWITCHES_SW0_MASK) {
+                display_setCursor(X_CURSOR, Y_SCORE_CURSOR);
+                display_setTextColor(DISPLAY_BLACK);
+                display_println("lower switch");
+                tetrisControl_drawStartMsg(false);
+                currentState = start_msg_st;
+            }
     }
 
     switch(currentState) { //Action states
@@ -279,7 +319,6 @@ void tetrisControl_tick() {
             startTimer++;
             break;
         case instruct_st:
-            printf("%d\n", instructTimer);
             instructTimer++;
             break;
         case falling_st:
@@ -306,6 +345,7 @@ void tetrisControl_tick() {
                 for (uint8_t j = 0; j < NUM_COLS; j++) {
                     if (board[j][i].filled) {
                         if (j == NUM_COLS - 2) {
+                            currentScore +=10;
                             tetrisDisplay_eraseFullLine(i, board);
                             tetrisDisplay_moveLinesDown(i, board);
                         }
@@ -324,6 +364,8 @@ void tetrisControl_tick() {
         case disp_score_st:
             scoreTime++;
             break;
+        case lower_switch_st:
+            break;
     }
-    printf("Current State: %d\n", currentState);
+    //printf("Current State: %d\n", currentState);
 }
