@@ -8,9 +8,9 @@
 #include "switches.h"
 
 #define STRING_LENGTH 10
-#define FALL_TIME 5
-#define INSTRUCT_TIMER 150
-#define SCORE_TIMER 20
+#define FALL_TIME 7
+#define INSTRUCT_TIMER 100
+#define SCORE_TIMER 50
 #define TETRIS_TEXT_SIZE 5
 #define TOUCH_TEXT_SIZE 2
 #define LOSE_TEXT_SIZE 4
@@ -36,8 +36,8 @@
 #define X_LTOUCH_CURSOR X_LOSE_CURSOR - 10
 #define X_SCORE_CURSOR DISPLAY_WIDTH / 2 - 70
 #define Y_SCORE_CURSOR DISPLAY_HEIGHT / 2 - 20
-#define X_INSTRUCT_CURSOR DISPLAY_WIDTH / 2 - 100
-#define Y_INSTRUCT_CURSOR DISPLAY_HEIGHT / 2 - 50
+#define X_INSTRUCT_CURSOR DISPLAY_WIDTH / 2 - 110
+#define Y_INSTRUCT_CURSOR DISPLAY_HEIGHT / 2 - 60
 #define Y_BTN0_CURSOR Y_INSTRUCT_CURSOR + 20
 #define Y_BTN1_CURSOR Y_BTN0_CURSOR + 20
 #define Y_BTN2_CURSOR Y_BTN1_CURSOR + 20
@@ -61,8 +61,9 @@ static enum tetrisControl_State_t { // Tetris control state machine
   lower_switch_st
 } currentState;
 
-static uint8_t instructTimer = 0, scoreTime = 0, currentScore = 0, fallCounter = 0;
-static uint16_t startTimer = 0;
+static uint8_t instructTimer = 0, scoreTime = 0, fallCounter = 0;
+static uint16_t startTimer = 0, currentScore = 0;
+static bool buttonPressed = false;
 
 void tetrisControl_drawStartMsg(bool erase) { //Draws and erases start message
     if (erase) {
@@ -102,78 +103,52 @@ void tetrisControl_drawStartMsg(bool erase) { //Draws and erases start message
 }
 
 void tetrisControl_drawLoseMsg(bool erase) { //Draws and erases lose message
-    if (erase) {
+    uint16_t color = erase ? DISPLAY_BLACK : DISPLAY_WHITE;
+    display_setTextColor(color);
     display_setCursor(X_LOSE_CURSOR, Y_CURSOR);
     display_setTextSize(LOSE_TEXT_SIZE);
-    display_setTextColor(DISPLAY_BLACK);
     display_println(LOSE_MSG);
     display_setCursor(X_LTOUCH_CURSOR, Y_TOUCH_CURSOR);
     display_setTextSize(TOUCH_TEXT_SIZE);
     display_println(RESTART_TOUCH_MSG);
-    }
-    else {
-    display_setCursor(X_LOSE_CURSOR, Y_CURSOR);
-    display_setTextSize(LOSE_TEXT_SIZE);
-    display_setTextColor(DISPLAY_WHITE);
-    display_println(LOSE_MSG);
-    display_setCursor(X_LTOUCH_CURSOR, Y_TOUCH_CURSOR);
-    display_setTextSize(TOUCH_TEXT_SIZE);
-    display_println(RESTART_TOUCH_MSG);
-    }
 }
 
 void tetrisControl_drawScore(bool erase) { //Displays the current score
-    if (erase) {
-        display_setCursor(X_SCORE_CURSOR, Y_SCORE_CURSOR);
-        display_setTextSize(SCORE_TEXT_SIZE);
-        display_setTextColor(DISPLAY_BLACK);
-        char stringMsg[STRING_LENGTH];
-        sprintf(stringMsg, "%s: %d\n", SCORE_MSG, currentScore);
-        display_println(stringMsg);
-    }
-    else {
-        display_setCursor(X_SCORE_CURSOR, Y_SCORE_CURSOR);
-        display_setTextSize(SCORE_TEXT_SIZE);
-        display_setTextColor(DISPLAY_WHITE);
-        char stringMsg[STRING_LENGTH];
-        sprintf(stringMsg, "%s: %d\n", SCORE_MSG, currentScore);
-        display_println(stringMsg);
-    }
+    uint16_t color = erase ? DISPLAY_BLACK : DISPLAY_WHITE;
+    display_setTextColor(color);
+    display_setCursor(X_SCORE_CURSOR, Y_SCORE_CURSOR);
+    display_setTextSize(SCORE_TEXT_SIZE);
+    char stringMsg[STRING_LENGTH];
+    sprintf(stringMsg, "%s: %d\n", SCORE_MSG, currentScore);
+    display_println(stringMsg);
 }
 
 void tetrisControl_drawInstructions(bool erase) { //Draws and erases instructions
-    if (erase) {
-        display_setCursor(X_CURSOR, Y_CURSOR);
-        display_setTextSize(1);
-        display_setTextColor(DISPLAY_BLACK);
-        display_println(INSTRUCT_MSG);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN0_CURSOR);
-        display_println(BTN0_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN1_CURSOR);
-        display_println(BTN1_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN2_CURSOR);
-        display_println(BTN2_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN3_CURSOR);
-        display_println(BTN3_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_SW0_CURSOR);
-        display_println(SW0_KEY);
-    }
-    else {
-        display_setCursor(X_INSTRUCT_CURSOR, Y_INSTRUCT_CURSOR);
-        display_setTextSize(1);
-        display_setTextColor(DISPLAY_WHITE);
-        display_println(INSTRUCT_MSG);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN0_CURSOR);
-        display_println(BTN0_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN1_CURSOR);
-        display_println(BTN1_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN2_CURSOR);
-        display_println(BTN2_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_BTN3_CURSOR);
-        display_println(BTN3_KEY);
-        display_setCursor(X_INSTRUCT_CURSOR, Y_SW0_CURSOR);
-        display_println(SW0_KEY);
-    }
+    uint16_t color = erase ? DISPLAY_BLACK : DISPLAY_WHITE;
+    display_setTextColor(color);
+    display_setCursor(X_INSTRUCT_CURSOR, Y_INSTRUCT_CURSOR);
+    display_setTextSize(2);
+    display_println(INSTRUCT_MSG);
+    display_setCursor(X_INSTRUCT_CURSOR, Y_BTN0_CURSOR);
+    display_println(BTN0_KEY);
+    display_setCursor(X_INSTRUCT_CURSOR, Y_BTN1_CURSOR);
+    display_println(BTN1_KEY);
+    display_setCursor(X_INSTRUCT_CURSOR, Y_BTN2_CURSOR);
+    display_println(BTN2_KEY);
+    display_setCursor(X_INSTRUCT_CURSOR, Y_BTN3_CURSOR);
+    display_println(BTN3_KEY);
+    display_setCursor(X_INSTRUCT_CURSOR, Y_SW0_CURSOR);
+    display_println(SW0_KEY);
+}
+
+void tetrisControl_inGameScore(bool erase) {
+    uint16_t color = erase ? DISPLAY_BLACK : DISPLAY_WHITE;
+    display_setTextSize(2);
+    display_setCursor(260, DISPLAY_HEIGHT/2+10);
+    display_setTextColor(color);
+    char thisScore[STRING_LENGTH];
+    sprintf(thisScore, "%d", currentScore);
+    display_println(thisScore);
 }
 
 // Used to init the state machine. Always provided though it may not be
@@ -207,6 +182,7 @@ void tetrisControl_tick() {
                 tetrisControl_drawInstructions(true);
                 instructTimer = 0;
                 tetrisDisplay_init(board);
+                tetrisControl_inGameScore(false);
                 tetrisDisplay_getNextShape(&currentShape, board); 
                 tetrisDisplay_drawShape(&currentShape);
                 tetrisDisplay_getNextShape(&nextShape, board);
@@ -225,7 +201,9 @@ void tetrisControl_tick() {
             }
             if (fallCounter >= FALL_TIME) {
                 if (tetrisDisplay_bottomCollision(&currentShape, board)){
+                    tetrisControl_inGameScore(true);
                     currentScore++;
+                    tetrisControl_inGameScore(false);
                     fallCounter = 0;
                     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
                         board[currentShape.boxes[i].x_pos][currentShape.boxes[i].y_pos] = currentShape.boxes[i];
@@ -283,9 +261,9 @@ void tetrisControl_tick() {
             if (scoreTime == SCORE_TIMER) {
                 if(switches_read() & SWITCHES_SW0_MASK) {
                     tetrisControl_drawScore(true);
-                    display_setCursor(X_CURSOR, Y_SCORE_CURSOR);
+                    display_setCursor(X_CURSOR - 50, Y_SCORE_CURSOR);
                     display_setTextColor(DISPLAY_WHITE);
-                    display_println("lower switch");
+                    display_println("Lower the Switch");
                     scoreTime = 0;
                     currentScore = 0;
                     currentState = lower_switch_st;
@@ -304,9 +282,9 @@ void tetrisControl_tick() {
             break;
         case lower_switch_st:
             if (!switches_read() & SWITCHES_SW0_MASK) {
-                display_setCursor(X_CURSOR, Y_SCORE_CURSOR);
+                display_setCursor(X_CURSOR - 50, Y_SCORE_CURSOR);
                 display_setTextColor(DISPLAY_BLACK);
-                display_println("lower switch");
+                display_println("Lower the Switch");
                 tetrisControl_drawStartMsg(false);
                 currentState = start_msg_st;
             }
@@ -323,38 +301,51 @@ void tetrisControl_tick() {
             break;
         case falling_st:
             if (buttons_read() & BUTTONS_BTN3_MASK) {
-                fallCounter++;
+                fallCounter = fallCounter + 4;
             }
             if (buttons_read() & BUTTONS_BTN0_MASK) {
-                tetrisDisplay_moveShape(&currentShape, board, true);
-                while(buttons_read() & BUTTONS_BTN0_MASK);
+                if (!buttonPressed) {
+                    tetrisDisplay_moveShape(&currentShape, board, true);
+                    buttonPressed = true;
+                }
             }
-            if (buttons_read() & BUTTONS_BTN1_MASK) {
-                tetrisDisplay_moveShape(&currentShape, board, false);
-                while(buttons_read() & BUTTONS_BTN1_MASK);
+            else if (buttons_read() & BUTTONS_BTN1_MASK) {
+                if (!buttonPressed) {
+                    tetrisDisplay_moveShape(&currentShape, board, false);
+                    buttonPressed = true;
+                }
             }
-            if (buttons_read() & BUTTONS_BTN2_MASK) {
-                tetrisDisplay_rotateShape(&currentShape, board);
-                while(buttons_read() & BUTTONS_BTN2_MASK);
+            else if (buttons_read() & BUTTONS_BTN2_MASK) {
+                if (!buttonPressed) {
+                    tetrisDisplay_rotateShape(&currentShape, board);
+                    buttonPressed = true;
+                }
+            }
+            else {
+                buttonPressed = false;
             }
             fallCounter++;
             break;
-        case check_row_st:
-            for (uint8_t i = NUM_ROWS - 1; i > 0;) {
-                i--;
-                for (uint8_t j = 0; j < NUM_COLS; j++) {
-                    if (board[j][i].filled) {
-                        if (j == NUM_COLS - 2) {
-                            currentScore +=10;
-                            tetrisDisplay_eraseFullLine(i, board);
-                            tetrisDisplay_moveLinesDown(i, board);
+        case check_row_st: {
+                uint8_t bonusMultiplier = 1;
+                for (uint8_t i = NUM_ROWS - 1; i > 0;) {
+                    i--;
+                    for (uint8_t j = 0; j < NUM_COLS; j++) {
+                        if (board[j][i].filled) {
+                            if (j == NUM_COLS - 2) {
+                                tetrisControl_inGameScore(true);
+                                currentScore += 10 * bonusMultiplier++;
+                                tetrisControl_inGameScore(false);
+                                tetrisDisplay_eraseFullLine(i, board);
+                                tetrisDisplay_moveLinesDown(i++, board);
+                            }
+                            else {
+                                continue;
+                            }
                         }
                         else {
-                            continue;
+                            break;
                         }
-                    }
-                    else {
-                        break;
                     }
                 }
             }
@@ -367,5 +358,4 @@ void tetrisControl_tick() {
         case lower_switch_st:
             break;
     }
-    //printf("Current State: %d\n", currentState);
 }
