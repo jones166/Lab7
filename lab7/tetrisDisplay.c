@@ -30,6 +30,14 @@ void tetrisDisplay_init(Box board[NUM_COLS][NUM_ROWS]) {
             }
         }
     }
+
+    display_setTextSize(2);
+    display_setCursor(20, DISPLAY_HEIGHT/2-10);
+    display_setTextColor(DISPLAY_WHITE);
+    display_println("Next");
+
+    display_setCursor(250, DISPLAY_HEIGHT/2-10);
+    display_println("Score");
 }
 
 bool tetrisDisplay_leftCollision(Shape* activeShape, Box board[NUM_COLS][NUM_ROWS]) {
@@ -63,7 +71,7 @@ bool tetrisDisplay_rotateCollision(Shape* activeShape, Box board[NUM_COLS][NUM_R
     for (uint8_t i = 0; i < SHAPE_SIZE; i++) {
         int8_t x_offset = activeShape->boxes[i].x_pos - activeShape->centerBox->x_pos;
         int8_t y_offset = activeShape->boxes[i].y_pos - activeShape->centerBox->y_pos;
-        if (board[activeShape->boxes[i].x_pos - y_offset][activeShape->boxes[i].y_pos + x_offset].filled) {
+        if (board[activeShape->centerBox->x_pos - y_offset][activeShape->centerBox->y_pos + x_offset].filled) {
             return true;
         }
     }
@@ -154,10 +162,6 @@ void tetrisDisplay_drawShape(Shape* activeShape) {
 }
 
 void tetrisDisplay_drawNextShape(Shape* nextShape) {
-    display_setTextSize(1);
-    display_setCursor(1, DISPLAY_HEIGHT/2);
-    display_setTextColor(DISPLAY_WHITE);
-    display_println("Next Shape");
 
     int8_t dist_x[SHAPE_SIZE];
     int8_t dist_y[SHAPE_SIZE];
